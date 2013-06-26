@@ -4,10 +4,19 @@
 
 SoftwareSerial TinySerial(2,3); // RX, TX
 
+// what edges are we reading pins on 
 const int READ_PIN = 7;
+// edge detect
+const int THRESHOLD = 15;
+
 unsigned int counter = 0;
 
-const int mode = 1;
+// what mode are we in (this is temporary)
+const int READ = 1;
+const int WRITE = 2;
+const int mode = READ;
+
+const int ID = '3';
 
 void setup()  
 {
@@ -20,42 +29,44 @@ void setup()
 
 void loop()
 {
-  
-if( mode == 1 ) {
 
-  if(TinySerial.available())
-  {
-    int received = TinySerial.parseInt();   //Contrary to what the Arduino playground would imply, parseIt is supported
-    if(received == 3)    //So it doesn't blink 150 times when you type 150 instead of 15
-    {    
-      Blink(1, received);    //Blink the LED on pin 1
-    }
-    else
+  if( mode == READ ) {
+
+    if(TinySerial.available())
     {
-      Blink(1, 1);
+      int received = TinySerial.parseInt();
+      if(received > 0 && received < 24) // how many tiles will we have?
+      {    
+        Blink(1, received); //debug confirmation
+      }
+
+      TinySerial.flush();
+
+      char c;
+      unsigned char d = 5;
+      itoa(received, &c, 10);
+
+      unsigned char cc[8];
+      cc[0] = (unsigned char) ID; // these will be this Tiles ID
+      cc[1] = ';';
+      cc[2] = (unsigned char) c; // who touched you, will be 0 - 255
+      cc[3] = ';';
+      cc[4] = '3'; // on what side
+      
+
+      MANCHESTER.TransmitBytes(d, &cc);
+      counter++;
     }
-    TinySerial.flush();
-    
-    char c;
-    unsigned char d;
-    itoa(counter, &c, 10);
-    d = 1;
-    
-    unsigned char cc = (unsigned char) c;
-    
-    MANCHESTER.TransmitBytes(d, &cc);
-    counter++;
+
+  } 
+  else {
+
+    if(analogRead(READ_PIN) > THRESHOLD)
+    {
+      TinySerial.print(ID);
+    }
   }
 
-} else {
-
-  if(analogRead(READ_PIN) > 10)
-  {
-     TinySerial.print("3");
-     Blink(1, 3); 
-  }
-}
-  
 }
 
 void Blink(byte led, byte times){ // poor man's display
@@ -66,6 +77,7 @@ void Blink(byte led, byte times){ // poor man's display
     delay (175);
   }
 }
+
 
 
 
