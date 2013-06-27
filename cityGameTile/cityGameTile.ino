@@ -46,7 +46,7 @@ void loop()
       unsigned char d = 5;
       itoa(received, &c, 10);
 
-      unsigned char cc[8];
+      unsigned char cc[6];
       cc[0] = (unsigned char) ID; // these will be this Tiles ID
       cc[1] = ';';
       cc[2] = (unsigned char) c; // who touched you, will be 0 - 255
@@ -54,7 +54,7 @@ void loop()
       cc[4] = '3'; // on what side
       
 
-      MANCHESTER.TransmitBytes(d, &cc);
+      MANCHESTER.TransmitBytes(d, &cc[0]);
       counter++;
     }
 
