@@ -14,16 +14,20 @@ unsigned int counter = 0;
 // what mode are we in (this is temporary)
 const int READ = 1;
 const int WRITE = 2;
-const int mode = READ;
+int mode = READ;
 
-const int ID = '3';
+const int ID = 2;
 
 void setup()  
 {
   // Open serial communications and let us know we are connected
   TinySerial.begin(1200);
-  pinMode(1, OUTPUT);
+  
+  pinMode(10, OUTPUT);
+  pinMode(9, OUTPUT);
+  
   pinMode(READ_PIN, INPUT);
+  
   MANCHESTER.SetTxPin(0);
 }
 
@@ -32,13 +36,22 @@ void loop()
 
   if( mode == READ ) {
 
+//    char c = TinySerial.read();
+//    
+//    if(c != -1) {
+//      Blink(9, 1);
+//    }
+    
     if(TinySerial.available())
     {
+      
+      Blink(9, 1);
+      
       int received = TinySerial.parseInt();
-      if(received > 0 && received < 24) // how many tiles will we have?
-      {    
-        Blink(1, received); //debug confirmation
-      }
+      //if(received > 0 && received < 24) // how many tiles will we have?
+      //{    
+        Blink(10, received); //debug confirmation
+      //}
 
       TinySerial.flush();
 

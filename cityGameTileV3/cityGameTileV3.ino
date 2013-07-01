@@ -1,3 +1,4 @@
+#include <SoftEasyTransfer.h>
 
 #define __AVR_ATtinyX4__
 
@@ -16,8 +17,7 @@ unsigned int counter = 0;
 // what mode are we in (this is temporary)
 const int WAITING = 0;
 const int CONNECTING = 1;
-const int ACK = 2;
-const int CONNECTED = 3;
+const int CONNECTED = 2;
 int mode = WAITING;
 
 const int ID = 5;
@@ -25,7 +25,16 @@ int lastConnectedSide = -1;
 int received;
 
 boolean hasID = false;
-boolean hasSendFull = false;
+boolean hasSentData = false;
+
+SoftEasyTransfer ET;
+
+struct connection{
+  int ID;
+  int side;
+};
+
+connection conn;
 
 /////////
 boolean writePinHigh = false;
@@ -39,7 +48,7 @@ long sendIDAgain = 0;
 void setup()  
 {
   // Open serial communications and let us know we are connected
-  TinySerial.begin(1200);
+  TinySerial.begin(4800);
   
   pinMode(10, OUTPUT);
   pinMode(9, OUTPUT);
@@ -53,68 +62,54 @@ void setup()
   MANCHESTER.SetTxPin(0);
   sendIDInterval = 100 + (ID * 10);
   
+  
+  ET.begin(details(conn), &TinySerial);
+  
 }
 
 void loop()
 {
   
-  if( mode == CONNECTING ) {
-    received = TinySerial.read();
-    
-    if(received != -1)
+  if( mode == CONNECTING ) 
+  {
+    // this is a blocking call
+    if( ET.receiveData() )
     {
-
-      TinySerial.flush();            
-      // if this tile is the lowest, we're going to tell
-      // the other tile not to bother sending
-      
-      if(ID < received)
+      if(ID < conn.ID)
       {
-        digitalWrite(9, HIGH);
-        digitalWrite(10, HIGH);
-        
         hasID = true;
-        
-        TinySerial.write(0xFF);
-        delay(100); // wait for Serial to finish up
+        delay(200); // wait for Serial to finish up
         sendConnection(ID, (unsigned char) received, lastConnectedSide);
-        hasSendFull = true;
       } 
-      else if(received < ID)
+      else if(conn.ID < ID)
       {
-        
         hasID = true;
-        
         digitalWrite(9, HIGH);
-        TinySerial.write(0xFF);
-        hasSendFull = true;
       }
-      else if( received == 0xFF && hasSendFull)
-      {
-        mode = CONNECTED;
-      }
-      else if( received == 0xFF && !hasSendFull)
-      {
-        TinySerial.write(0xFF);
-        mode = CONNECTED;
-      }
+      return; // quit
     }
-    else
+    
+    if( !hasSentData )
     {
-      if(millis() - sendIDAgain > sendIDInterval)
-      {
-        TinySerial.write(ID);
-        sendIDAgain = millis();
-        TinySerial.flush();
-      }
+      ET.sendData();
+      hasSentData = true;
     }
+    
+    if( hasID && hasSentData )
+    {
+      mode = CONNECTED;
+    }
+    
   }
 
   if(mode == CONNECTED)
   {
     
-    //Blink(10, received);
+    Blink(10, received);
     digitalWrite(9, HIGH);
+    
+    hasID = false;
+    hasSentData = false;
     /*
     // or we're are connected and we need to figure out what else is connected to us
     if(analogRead(sideConnections[lastConnectedSide]) < THRESHOLD) // we just lost our connection
@@ -147,7 +142,6 @@ void loop()
         mode = CONNECTING;
         return;
       }
-      
     }
   }
 }
@@ -164,24 +158,26 @@ void Blink(byte led, byte times){ // poor man's display
 
 void sendDisconnect( int myId, int otherId, int side ) {
   unsigned char cc[7];
-  cc[0] = (unsigned char) myId; // these will be this Tiles ID
-  cc[1] = ';';
-  cc[2] = (unsigned char) otherId; // who touched you, will be 0 - 255
-  cc[3] = ';';
-  cc[4] = (unsigned char) side; // on what side
+  cc[0] = '-';
+  cc[1] = (unsigned char) myId; // these will be this Tiles ID
+  cc[2] = ';';
+  cc[3] = (unsigned char) otherId; // who touched you, will be 0 - 255
+  cc[4] = ';';
+  cc[5] = (unsigned char) side; // on what side
 
-  MANCHESTER.TransmitBytes( (unsigned char) 5, &cc[0]);
+  MANCHESTER.TransmitBytes( (unsigned char) 6, &cc[0]);
 }
 
 void sendConnection( int myId, int otherId, int side ) {
   unsigned char cc[7];
-  cc[0] = (unsigned char) myId; // these will be this Tiles ID
-  cc[1] = ';';
-  cc[2] = (unsigned char) otherId; // who touched you, will be 0 - 255
-  cc[3] = ';';
-  cc[4] = (unsigned char) side; // on what side
+  cc[0] = '+';
+  cc[1] = (unsigned char) myId; // these will be this Tiles ID
+  cc[2] = ';';
+  cc[3] = (unsigned char) otherId; // who touched you, will be 0 - 255
+  cc[4] = ';';
+  cc[5] = (unsigned char) side; // on what side
 
-  MANCHESTER.TransmitBytes( (unsigned char) 5, &cc[0]);
+  MANCHESTER.TransmitBytes( (unsigned char) 6, &cc[0]);
 }
 
 
