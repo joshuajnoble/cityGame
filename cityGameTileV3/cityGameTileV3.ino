@@ -20,7 +20,7 @@ const int CONNECTING = 1;
 const int CONNECTED = 2;
 int mode = WAITING;
 
-const int ID = 5;
+const int ID = 3;
 int lastConnectedSide = -1;
 int received;
 
@@ -72,26 +72,39 @@ void loop()
   
   if( mode == CONNECTING ) 
   {
+    
+    //signal(10, 1);
+    
     // this is a blocking call
     if( ET.receiveData() )
     {
+      
+      signal(10, conn.ID);
+      
       if(ID < conn.ID)
       {
         hasID = true;
         delay(200); // wait for Serial to finish up
-        sendConnection(ID, (unsigned char) received, lastConnectedSide);
+        sendConnection(ID, (unsigned char) conn.ID, lastConnectedSide);
+        digitalWrite(10, HIGH);
       } 
       else if(conn.ID < ID)
       {
         hasID = true;
-        digitalWrite(9, HIGH);
       }
       return; // quit
     }
     
     if( !hasSentData )
     {
+      
+      conn.ID = ID;
+      conn.side = 4;
+      
       ET.sendData();
+      
+      //signal(10, 2);
+      
       hasSentData = true;
     }
     
@@ -104,12 +117,7 @@ void loop()
 
   if(mode == CONNECTED)
   {
-    
-    Blink(10, received);
     digitalWrite(9, HIGH);
-    
-    hasID = false;
-    hasSentData = false;
     /*
     // or we're are connected and we need to figure out what else is connected to us
     if(analogRead(sideConnections[lastConnectedSide]) < THRESHOLD) // we just lost our connection
@@ -117,6 +125,8 @@ void loop()
       lastConnectedSide = -1;
       // need to send here too
       mode = WAITING;
+      hasID = false;
+      hasSentData = false;
     }*/
   }
 
@@ -169,6 +179,7 @@ void sendDisconnect( int myId, int otherId, int side ) {
 }
 
 void sendConnection( int myId, int otherId, int side ) {
+  
   unsigned char cc[7];
   cc[0] = '+';
   cc[1] = (unsigned char) myId; // these will be this Tiles ID
