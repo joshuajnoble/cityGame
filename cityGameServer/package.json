@@ -1,0 +1,27 @@
+{
+  "name": "CityGameServer",
+  "version": "0.0.0",
+  "description": "Serial Server for storing sesson data",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/urban/cityGame"
+  },
+  "keywords": [
+    "Arduino",
+    "Node",
+    "Serial"
+  ],
+  "author": "Urban Faubion",
+  "license": "BSD",
+  "dependencies": {
+    "serialport": "~1.1.1",
+    "moment": "~2.0.0",
+    "express": "~3.3.1",
+    "socket.io": "~0.9.16"
+  }
+}
