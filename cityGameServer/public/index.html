@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>City Game</title>
+  </head>
+  <body>
+
+    <h1>City Game</h1>
+    <div id="log"></div>
+
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      var log = document.querySelector('#log');
+
+      var socket = io.connect('/');
+      socket.on('log', function (data) {
+        log.innerText += data;
+      });
+
+    </script>
+  </body>
+</html>
