@@ -1,46 +1,49 @@
 #include <MANCHESTER.h>
 
-#define RxPin 2
-
-unsigned char data;
 unsigned char *datas;
 
 void setup() {
   Serial.begin(57600);
   
-  pinMode(13, OUTPUT);
-  
-  datas = (unsigned char*) malloc( 1 );
-  
-  // Set digital TX pin
+  datas = (unsigned char*) malloc( 4 );
+
   MANRX_SetRxPin(2);
+
   // Prepare interrupts
   MANRX_SetupReceive();
+
   // Begin receiving data
-  MANRX_BeginReceiveBytes(1, &data);
-  
-  pinMode(0, OUTPUT);
-  
-  int c = 2;
-  char d;
-  itoa(c, &d, 10);
-  Serial.println(d);
-  
+  MANRX_BeginReceiveBytes(4, datas);
+  pinMode(13, OUTPUT);
+  //Serial.println(" OK ");
 }
 
 void loop() {
+  
+
   if (MANRX_ReceiveComplete()) {
+    
+    digitalWrite(13, HIGH);
     unsigned char rcvdBytes;
+
+    //MANRX_GetMessageBytes(&rcvdBytes,  &datas);
     
-    //unsigned char *rcvdBytes, unsigned char **data)
-    MANRX_GetMessageBytes(&rcvdBytes,  &datas);
+    Serial.print(" rcvd: ");
+    Serial.println(rcvdBytes);
     
-    MANRX_BeginReceiveBytes(1, &data);
+    int firstTile = datas[1];
+    int secondTile = datas[2];
+    int side = datas[3];
     
-    int foo = datas[0] - 48;
+    Serial.print(firstTile);
+    Serial.print(" ");
+    Serial.print(secondTile);
+    Serial.print(" ");
+    Serial.println(side);
     
-    Serial.println(foo);
+    MANRX_BeginReceiveBytes(4, datas);
   }
+  
 }
 
 

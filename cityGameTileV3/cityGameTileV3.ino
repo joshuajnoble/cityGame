@@ -10,7 +10,7 @@ SoftwareSerial TinySerial(2,3); // RX, TX
 // what edges are we reading pins on 
 const int READ_PIN = 7;
 // edge detect
-const int THRESHOLD = 800;
+const int THRESHOLD = 500;
 
 unsigned int counter = 0;
 
@@ -20,7 +20,7 @@ const int CONNECTING = 1;
 const int CONNECTED = 2;
 int mode = WAITING;
 
-const int ID = 3;
+const int ID = 6;
 int lastConnectedSide = -1;
 int received;
 
@@ -85,7 +85,7 @@ void loop()
       {
         hasID = true;
         delay(200); // wait for Serial to finish up
-        sendConnection(ID, (unsigned char) conn.ID, lastConnectedSide);
+        sendConnection(ID, conn.ID, lastConnectedSide);
         digitalWrite(10, HIGH);
       } 
       else if(conn.ID < ID)
@@ -136,7 +136,7 @@ void loop()
     {
       int i = 0;
       
-      /*while( i < 6) {
+      while( i < 6) {
         if(analogRead(sideConnections[i]) > THRESHOLD)
         {
           lastConnectedSide = connectionToSideMap[i];
@@ -144,14 +144,22 @@ void loop()
           return;
         }
         i++;
-      }*/
+      }
       
-      if(analogRead(7) > THRESHOLD)
+      delay(50);
+      
+      while( i < 6) {
+        pinMode(sideConnections[i], OUTPUT);
+        digitalWrite(sideConnections[i], HIHG
+        i++;
+      }
+      
+      /*if(analogRead(7) > THRESHOLD)
       {
         lastConnectedSide = 3;
         mode = CONNECTING;
         return;
-      }
+      }*/
     }
   }
 }
@@ -174,21 +182,31 @@ void sendDisconnect( int myId, int otherId, int side ) {
   cc[3] = (unsigned char) otherId; // who touched you, will be 0 - 255
   cc[4] = ';';
   cc[5] = (unsigned char) side; // on what side
+  cc[6] = '/0';
 
-  MANCHESTER.TransmitBytes( (unsigned char) 6, &cc[0]);
+  MANCHESTER.TransmitBytes( (unsigned char) 7, &cc[0]);
 }
 
 void sendConnection( int myId, int otherId, int side ) {
   
-  unsigned char cc[7];
+  /*unsigned char cc[7];
   cc[0] = '+';
   cc[1] = (unsigned char) myId; // these will be this Tiles ID
   cc[2] = ';';
   cc[3] = (unsigned char) otherId; // who touched you, will be 0 - 255
   cc[4] = ';';
   cc[5] = (unsigned char) side; // on what side
+  cc[6] = '/0';
 
-  MANCHESTER.TransmitBytes( (unsigned char) 6, &cc[0]);
+  MANCHESTER.TransmitBytes( (unsigned char) 7, &cc[0]);*/
+  
+  unsigned char cc[4];
+  cc[0] = '+';
+  cc[1] = (unsigned char) myId; // these will be this Tiles ID
+  cc[2] = (unsigned char) otherId; // who touched you, will be 0 - 255
+  cc[3] = (unsigned char) side; // on what side
+
+  MANCHESTER.TransmitBytes( (unsigned char) 4, &cc[0]);
 }
 
 
